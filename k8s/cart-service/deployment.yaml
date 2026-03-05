@@ -9,7 +9,7 @@ metadata:
     tags.datadoghq.com/env: "production"
     tags.datadoghq.com/version: "1.0.0"
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: cart-service
@@ -64,7 +64,7 @@ spec:
           resources:
             requests:
               memory: 128Mi
-              cpu: 100m
+              cpu: 25m
             limits:
               memory: 256Mi
               cpu: 500m
