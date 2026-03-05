@@ -147,7 +147,7 @@ def health():
 
 
 @app.post("/orders", response_model=OrderResponse)
-async def create_order(order: OrderCreate, db: Session = Depends(get_db) if False else None):
+async def create_order(order: OrderCreate):
     db = SessionLocal()
     try:
         logger.info(f"Creating order for user_id={order.user_id} total=${order.total:.2f} items={len(order.items)}")
