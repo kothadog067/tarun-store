@@ -47,13 +47,13 @@ spec:
               value: "true"
             - name: DD_PROFILING_ENABLED
               value: "true" 
-            - name: DATABASE_URL
-              value: "postgresql://tarun:$(POSTGRES_PASSWORD)@postgres:5432/users_db"
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: tarun-store-secrets
                   key: postgres-password
+            - name: DATABASE_URL
+              value: "postgresql://tarun:$(POSTGRES_PASSWORD)@postgres:5432/users_db"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
