@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: tarun-store
+  labels:
+    app: order-service
+    tags.datadoghq.com/service: "order-service"
+    tags.datadoghq.com/env: "production"
+    tags.datadoghq.com/version: "1.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+        tags.datadoghq.com/service: "order-service"
+        tags.datadoghq.com/env: "production"
+        tags.datadoghq.com/version: "1.0.0"
+      annotations:
+        admission.datadoghq.com/python-lib.version: "latest"
+    spec:
+      containers:
+        - name: order-service
+          image: gcr.io/PROJECT_ID/order-service:IMAGE_TAG
+          ports:
+            - containerPort: 8004
+          env:
+            - name: DD_SERVICE
+              value: "order-service"
+            - name: DD_ENV
+              value: "production"
+            - name: DD_VERSION
+              value: "1.0.0"
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_TRACE_AGENT_PORT
+              value: "8126"
+            - name: DD_LOGS_INJECTION
+              value: "true"
+            - name: DD_RUNTIME_METRICS_ENABLED
+              value: "true"
+            - name: DD_PROFILING_ENABLED
+              value: "true" 
+            - name: DATABASE_URL
+              value: "postgresql://tarun:$(POSTGRES_PASSWORD)@postgres:5432/orders_db"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tarun-store-secrets
+                  key: postgres-password
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+              cpu: 500m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: tarun-store
+  labels:
+    app: order-service
+spec:
+  selector:
+    app: order-service
+  ports:
+    - port: 8004
+      targetPort: 8004
+      name: http

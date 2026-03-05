@@ -1,0 +1,73 @@
+# Install Datadog via Helm (recommended):
+# helm repo add datadog https://helm.datadoghq.com
+# helm repo update
+# helm install datadog-agent -f datadog-values.yaml datadog/datadog
+#
+# Or apply this manifest directly after creating the datadog namespace:
+# kubectl create namespace datadog
+# kubectl apply -f datadog-agent.yaml
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: datadog
+---
+# Datadog Agent DaemonSet with APM + SSI
+apiVersion: datadoghq.com/v2alpha1
+kind: DatadogAgent
+metadata:
+  name: datadog
+  namespace: datadog
+spec:
+  global:
+    site: datadoghq.com
+    credentials:
+      apiSecret:
+        secretName: datadog-secret
+        keyName: api-key
+    tags:
+      - "env:production"
+      - "project:tarun-store"
+
+  features:
+    apm:
+      enabled: true
+      instrumentation:
+        enabled: true
+        enabledNamespaces:
+          - tarun-store
+        libVersions:
+          python: "latest"
+
+    logCollection:
+      enabled: true
+      containerCollectAll: true
+
+    liveProcesses:
+      enabled: true
+
+    liveContainerCollection:
+      enabled: true
+
+    npm:
+      enabled: true
+
+    usm:
+      enabled: true
+
+    admissionController:
+      enabled: true
+      mutateUnlabelled: false
+
+    dogstatsd:
+      enabled: true
+      hostPortConfig:
+        enabled: true
+        hostPort: 8125
+
+    remoteConfiguration:
+      enabled: true
+---
+# Secret for Datadog API key — create this manually:
+# kubectl create secret generic datadog-secret -n datadog \
+#   --from-literal=api-key=YOUR_DD_API_KEY

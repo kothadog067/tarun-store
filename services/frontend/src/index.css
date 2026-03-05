@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-gray-900 font-sans;
+  }
+  h1, h2, h3 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gray-900 text-white px-6 py-3 font-medium tracking-wider uppercase text-sm hover:bg-gray-700 transition-colors duration-200;
+  }
+  .btn-gold {
+    @apply bg-gold-600 text-white px-6 py-3 font-medium tracking-wider uppercase text-sm hover:bg-gold-700 transition-colors duration-200;
+  }
+  .btn-outline {
+    @apply border border-gray-900 text-gray-900 px-6 py-3 font-medium tracking-wider uppercase text-sm hover:bg-gray-900 hover:text-white transition-colors duration-200;
+  }
+  .section-title {
+    @apply font-serif text-3xl md:text-4xl text-gray-900 tracking-tight;
+  }
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+  }
+  .gold-text {
+    @apply text-gold-600;
+  }
+  .input-field {
+    @apply w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition-colors;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #c9a84c; border-radius: 3px; }
+
+/* Price badge */
+.price-tag { font-variant-numeric: tabular-nums; }
+
+/* Skeleton loading */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}

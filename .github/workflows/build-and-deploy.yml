@@ -1,0 +1,160 @@
+name: Build and Deploy to GKE
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GKE_CLUSTER: tarun-store-cluster
+  GKE_ZONE: us-central1
+  REGISTRY: gcr.io
+
+jobs:
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    strategy:
+      matrix:
+        service:
+          - name: frontend
+            context: services/frontend
+          - name: api-gateway
+            context: services/api-gateway
+          - name: product-service
+            context: services/product-service
+          - name: user-service
+            context: services/user-service
+          - name: cart-service
+            context: services/cart-service
+          - name: order-service
+            context: services/order-service
+          - name: payment-service
+            context: services/payment-service
+          - name: notification-service
+            context: services/notification-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker --quiet
+
+      - name: Build and push ${{ matrix.service.name }}
+        run: |
+          IMAGE=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ matrix.service.name }}
+          TAG=${{ github.sha }}
+          docker build -t $IMAGE:$TAG -t $IMAGE:latest ${{ matrix.service.context }}
+          docker push $IMAGE:$TAG
+          docker push $IMAGE:latest
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+
+  deploy:
+    name: Deploy to GKE
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_ZONE }}
+
+      - name: Deploy to Kubernetes
+        run: |
+          TAG=${{ github.sha }}
+
+          # Replace image tags in manifests
+          find k8s -name "*.yaml" | xargs sed -i \
+            "s|gcr.io/PROJECT_ID/|gcr.io/${{ env.PROJECT_ID }}/|g"
+          find k8s -name "*.yaml" | xargs sed -i \
+            "s|:IMAGE_TAG|:$TAG|g"
+
+          # Apply namespace and infra
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/infra/secrets.yaml
+          kubectl apply -f k8s/infra/postgres.yaml
+          kubectl apply -f k8s/infra/redis.yaml
+
+          # Wait for postgres and redis
+          kubectl rollout status deployment/postgres -n tarun-store --timeout=120s
+          kubectl rollout status deployment/redis -n tarun-store --timeout=60s
+
+          # Apply all services
+          for svc in frontend api-gateway product-service user-service cart-service order-service payment-service notification-service; do
+            kubectl apply -f k8s/$svc/deployment.yaml
+          done
+
+          # Apply ingress
+          kubectl apply -f k8s/ingress/ingress.yaml
+
+          # Wait for rollouts
+          for svc in frontend api-gateway product-service user-service cart-service order-service payment-service notification-service; do
+            kubectl rollout status deployment/$svc -n tarun-store --timeout=180s
+          done
+
+          echo "Deployment complete!"
+          kubectl get pods -n tarun-store
+
+      - name: Notify Datadog deployment
+        if: success()
+        run: |
+          curl -X POST "https://api.datadoghq.com/api/v1/events" \
+            -H "DD-API-KEY: ${{ secrets.DD_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "title": "Deployment: tarun-store",
+              "text": "Deployed tarun-store commit ${{ github.sha }} to production",
+              "tags": ["env:production", "project:tarun-store", "source:github-actions"],
+              "alert_type": "success"
+            }'
+
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install and check services
+        run: |
+          pip install ruff
+          ruff check services/ --select E,F --ignore E501 || true
+          echo "Lint complete"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build frontend
+        run: |
+          cd services/frontend
+          npm install
+          npm run build
+          echo "Frontend build OK"
