@@ -16,6 +16,8 @@ metadata:
   namespace: tarun-store
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: postgres
@@ -47,11 +49,11 @@ spec:
               mountPath: /docker-entrypoint-initdb.d
           resources:
             requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
               memory: 256Mi
               cpu: 250m
-            limits:
-              memory: 512Mi
-              cpu: 500m
       volumes:
         - name: postgres-data
           persistentVolumeClaim:
