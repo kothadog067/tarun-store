@@ -20,8 +20,6 @@ spec:
         tags.datadoghq.com/service: "product-service"
         tags.datadoghq.com/env: "production"
         tags.datadoghq.com/version: "1.0.0"
-      annotations:
-        admission.datadoghq.com/python-lib.version: "latest"
     spec:
       containers:
         - name: product-service

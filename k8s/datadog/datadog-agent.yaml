@@ -33,11 +33,7 @@ spec:
     apm:
       enabled: true
       instrumentation:
-        enabled: true
-        enabledNamespaces:
-          - tarun-store
-        libVersions:
-          python: "latest"
+        enabled: false
 
     logCollection:
       enabled: true
