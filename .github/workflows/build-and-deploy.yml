@@ -106,7 +106,7 @@ jobs:
 
           # Wait for postgres and redis
           kubectl rollout status deployment/postgres -n tarun-store --timeout=120s
-          kubectl rollout status deployment/redis -n tarun-store --timeout=60s
+          kubectl rollout status deployment/redis -n tarun-store --timeout=180s
 
           # Apply all services
           for svc in frontend api-gateway product-service user-service cart-service order-service payment-service notification-service; do
