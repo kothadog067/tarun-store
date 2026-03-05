@@ -98,6 +98,20 @@ jobs:
           DD_API_KEY_B64=$(echo -n "${{ secrets.DD_API_KEY }}" | base64 -w 0)
           sed -i "s|DATADOG_API_KEY_PLACEHOLDER|${DD_API_KEY_B64}|g" k8s/infra/secrets.yaml
 
+          # Ensure cert-manager is installed (idempotent)
+          helm repo add jetstack https://charts.jetstack.io --force-update
+          helm upgrade --install cert-manager jetstack/cert-manager \
+            --namespace cert-manager --create-namespace \
+            --set crds.enabled=true \
+            --set resources.requests.cpu=25m \
+            --set resources.requests.memory=128Mi \
+            --set webhook.resources.requests.cpu=25m \
+            --set webhook.resources.requests.memory=64Mi \
+            --set cainjector.resources.requests.cpu=25m \
+            --set cainjector.resources.requests.memory=128Mi \
+            --set "extraArgs={--leader-elect-resource-namespace=cert-manager}" \
+            --wait --timeout=5m || true
+
           # Apply namespace and infra
           kubectl apply -f k8s/namespace.yaml
           kubectl apply -f k8s/infra/secrets.yaml
