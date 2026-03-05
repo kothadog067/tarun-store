@@ -94,6 +94,10 @@ jobs:
           find k8s -name "*.yaml" | xargs sed -i \
             "s|:IMAGE_TAG|:$TAG|g"
 
+          # Inject Datadog API key from GitHub secret
+          DD_API_KEY_B64=$(echo -n "${{ secrets.DD_API_KEY }}" | base64 -w 0)
+          sed -i "s|DATADOG_API_KEY_PLACEHOLDER|${DD_API_KEY_B64}|g" k8s/infra/secrets.yaml
+
           # Apply namespace and infra
           kubectl apply -f k8s/namespace.yaml
           kubectl apply -f k8s/infra/secrets.yaml
