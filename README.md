@@ -67,13 +67,13 @@ open http://localhost:3000
 - `gcloud` CLI installed
 - `kubectl` installed
 - `helm` installed
-- Domain name (e.g. taruns-store.com)
+- Domain name (e.g. kothadog.com)
 
 ### Step 1: GCP Setup
 ```bash
 export GCP_PROJECT_ID=your-project-id
 export DD_API_KEY=your-datadog-api-key
-export DOMAIN=taruns-store.com
+export DOMAIN=kothadog.com
 
 chmod +x scripts/setup-gcp.sh
 ./scripts/setup-gcp.sh

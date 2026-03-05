@@ -13,12 +13,11 @@ metadata:
 spec:
   tls:
     - hosts:
-        - taruns-store.com
-        - www.taruns-store.com
+        - kothadog.com
+        - www.kothadog.com
       secretName: tarun-store-tls
   rules:
-    # API routes → API gateway
-    - host: taruns-store.com
+    - host: kothadog.com
       http:
         paths:
           - path: /api(/|$)(.*)
@@ -28,7 +27,6 @@ spec:
                 name: api-gateway
                 port:
                   number: 8000
-          # Everything else → frontend
           - path: /
             pathType: Prefix
             backend:
@@ -36,7 +34,7 @@ spec:
                 name: frontend
                 port:
                   number: 80
-    - host: www.taruns-store.com
+    - host: www.kothadog.com
       http:
         paths:
           - path: /
@@ -55,7 +53,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: tarun@example.com  # Replace with your email
+    email: tarun.kothandaraman@gmail.com
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:

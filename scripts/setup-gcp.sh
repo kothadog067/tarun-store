@@ -10,7 +10,7 @@ set -euo pipefail
 PROJECT_ID="${GCP_PROJECT_ID:-}"
 CLUSTER_NAME="tarun-store-cluster"
 ZONE="us-central1"
-DOMAIN="${DOMAIN:-taruns-store.com}"
+DOMAIN="${DOMAIN:-kothadog.com}"
 DD_API_KEY="${DD_API_KEY:-}"
 
 if [[ -z "$PROJECT_ID" ]]; then
